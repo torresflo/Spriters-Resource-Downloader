@@ -1,0 +1,83 @@
+import re
+import requests
+from io import BytesIO
+
+from bs4 import BeautifulSoup
+from PIL import Image
+
+from .VerboseTools import Logger
+from .DataTools import ImageSaver, StringHelper
+
+class SpritersResourceDownloader:
+    UrlSpritersResource = "https://www.spriters-resource.com"
+    UrlRegexValidator = "^https?:\/\/www\.spriters-resource\.com\/([a-zA-Z0-9_]+)\/([a-zA-Z0-9_]+)"
+
+    SpritesheetDivClass = "updatesheeticons"
+    IconHeaderTextSpanClass = "iconheadertext"
+    SpritesheetImageIdClass = "sheet-container"
+
+    def __init__(self, link=str) -> None:
+        self.m_link = link
+        self.m_logger = Logger()
+
+        if not self.validateLink():
+            raise Exception("Invalid link. Please provid a link to a game on the website spriters-resource.com")
+
+        self.m_saveDirectory = f"{ImageSaver.DefaultDownloadDataFolderPath}/{self.m_consoleName}/{self.m_gameName}"
+
+    def validateLink(self) -> bool:
+        pattern = re.compile(SpritersResourceDownloader.UrlRegexValidator)
+        pattern.match(self.m_link)
+        match = pattern.match(self.m_link)
+        if len(match.groups()) == 2:
+            self.m_consoleName = match.group(1)
+            self.m_gameName = match.group(2)
+            return True
+        return False
+
+    def setVerboseEnabled(self, enable=bool):
+        self.m_logger.setEnabled(enable)
+
+    def startDownload(self):
+        links = self.computeSpritesheetLinks()
+        self.downloadSpritesheets(links)
+
+    def computeSpritesheetLinks(self):
+        self.m_logger.printSummary(self.m_consoleName, self.m_gameName)
+        self.m_logger.printDownload(self.m_link)
+        page = requests.get(self.m_link).content
+
+        soup = BeautifulSoup(page, "html.parser")
+        spritesheetDivList = soup.find_all("div", {"class" : f"{SpritersResourceDownloader.SpritesheetDivClass}"})
+        
+        links = []
+
+        for spritesheetDiv in spritesheetDivList:
+            spriteSheetLinks = spritesheetDiv.find_all("a")
+            for spriteSheetLink in spriteSheetLinks:
+                link = spriteSheetLink.get("href")
+                name = spriteSheetLink.find("span", {"class" : f"{SpritersResourceDownloader.IconHeaderTextSpanClass}"}).text
+                name = StringHelper.cleanString(name)
+                links.append({
+                    "link": link,
+                    "name": name
+                })
+        return links
+
+    def downloadSpritesheets(self, links):
+        self.m_logger.startProgessBar(len(links))
+        for linkData in links:
+            self.m_logger.incrementProgessBar()
+            page = requests.get(f"{SpritersResourceDownloader.UrlSpritersResource}{linkData['link']}").content
+            soup = BeautifulSoup(page, "html.parser")
+            spritesheetDiv = soup.find("div", {"id": f"{SpritersResourceDownloader.SpritesheetImageIdClass}"})
+            spriteLink = spritesheetDiv.img.get("src")
+
+            self.downloadAndSaveSprite(spriteLink, linkData["name"])
+        self.m_logger.printDownloadDone()
+
+    def downloadAndSaveSprite(self, link=str, name=str):
+        imageContent = requests.get(f"{SpritersResourceDownloader.UrlSpritersResource}{link}").content
+        image = Image.open(BytesIO(imageContent)).convert('RGBA')
+        ImageSaver.saveImage(image, self.m_saveDirectory, name)
+
