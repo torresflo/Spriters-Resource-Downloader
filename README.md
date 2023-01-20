@@ -24,8 +24,8 @@
 * [License](#license)
 
 ## Introduction
-Spriters-Resource-Downloader
-This repository contains a command line application to simply download all sprites and spritesheets of a given game from the website <a href="https://www.spriters-resource.com">Spriters Resource</a> (`https://www.spriters-resource.com"`).
+
+This repository contains a command line application to simply download all sprites and spritesheets of a given game from the website <a href="https://www.spriters-resource.com">Spriters Resource</a> (`https://www.spriters-resource.com`).
 
 ## Getting Started
 
