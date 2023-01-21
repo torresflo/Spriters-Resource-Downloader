@@ -20,14 +20,19 @@
   * [Prerequisites and dependencies](#prerequisites-and-dependencies)
   * [Installation](#installation)
 * [Usage](#usage)
+  *[Command line options](#command-line-options)
 * [Contributing](#contributing)
 * [License](#license)
 
 ## Introduction
 
-This repository contains a command line application to simply download all sprites and spritesheets of a given game from the website <a href="https://www.spriters-resource.com">Spriters Resource</a> (`https://www.spriters-resource.com`).
+This repository contains a command line application to simply download all sprites and spritesheets of a given game from the website [Spriters Resource](https://www.spriters-resource.com) (`https://www.spriters-resource.com`).
 
 ## Getting Started
+
+For users, you can just download the [latest release](https://github.com/torresflo/Spriters-Resource-Downloader/releases/latest) of the application and jump [here](#usage).
+
+Next information is mainly dedicated to developers who wants to run the application in a more pythonish way.
 
 ### Prerequisites and dependencies
 
@@ -50,9 +55,17 @@ You can now launch the app by running `spriters-resource-downloader.py`.
 
 Just launch the application with:
 
+For users:
+```
+spriters-resource-downloader.exe [-h] [-v] url
+```
+
+For developers:
 ```
 python spriters-resource-downloader.py [-h] [-v] url
 ```
+
+### Command line options
 
 Here are the possible arguments:
 
@@ -69,8 +82,14 @@ It is recommended to activate the verbose mode (optional, not activated by defau
 
 ### Example
 
-The next command line will download all the sprites referenced on this <a href="https://www.spriters-resource.com/game_boy_gbc/pokemongoldsilver/">page</a> and put them in the folder `downloaded/game_boy_gbc/pokemongoldsilver/` while printing progress during download:
+The next command line will download all the sprites referenced on this [page](https://www.spriters-resource.com/game_boy_gbc/pokemongoldsilver/) and put them in the folder `downloaded/game_boy_gbc/pokemongoldsilver/` while printing progress during download:
 
+For users:
+```
+spriters-resource-downloader.exe -v https://www.spriters-resource.com/game_boy_gbc/pokemongoldsilver/
+```
+
+For developers:
 ```
 python spriters-resource-downloader.py -v https://www.spriters-resource.com/game_boy_gbc/pokemongoldsilver/
 ```
