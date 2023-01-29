@@ -20,7 +20,7 @@
   * [Prerequisites and dependencies](#prerequisites-and-dependencies)
   * [Installation](#installation)
 * [Usage](#usage)
-  *[Command line options](#command-line-options)
+  * [Command line options](#command-line-options)
 * [Contributing](#contributing)
 * [License](#license)
 
