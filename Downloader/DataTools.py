@@ -2,8 +2,9 @@ import os
 import re
 
 from PIL import Image
+from zipfile import ZipFile
 
-class ImageSaver:
+class ResourceSaver:
     DefaultDownloadDataFolderPath = "/downloaded"
 
     def createFolder(folderName):
@@ -11,8 +12,12 @@ class ImageSaver:
             os.makedirs(folderName, exist_ok=True)
 
     def saveImage(image : Image, saveDirectory, fileName):
-        ImageSaver.createFolder(f"./{saveDirectory}")
+        ResourceSaver.createFolder(f"./{saveDirectory}")
         image.save(f"./{saveDirectory}/{fileName}.png")
+
+    def saveZip(file: ZipFile, directory: str, fileName: str):
+        ResourceSaver.createFolder(f'./{directory}')
+        file.extractall(f'./{directory}/{fileName}')
 
 class StringHelper:
     def cleanString(string: str):

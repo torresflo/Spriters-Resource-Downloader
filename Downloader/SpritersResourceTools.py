@@ -1,12 +1,13 @@
 import re
 import requests
-from io import BytesIO
+from zipfile import ZipFile
+from io import BytesIO, StringIO
 
 from bs4 import BeautifulSoup
 from PIL import Image
 
 from .VerboseTools import Logger
-from .DataTools import ImageSaver, StringHelper
+from .DataTools import ResourceSaver, StringHelper
 
 class SpritersResourceDownloader:
     UrlSpritersResource = "https://www.spriters-resource.com"
@@ -15,6 +16,7 @@ class SpritersResourceDownloader:
     SpritesheetDivClass = "updatesheeticons"
     IconHeaderTextSpanClass = "iconheadertext"
     SpritesheetImageIdClass = "sheet-container"
+    ZipDownloadClass = "zip-download"
 
     def __init__(self, link=str) -> None:
         self.m_link = link
@@ -23,7 +25,7 @@ class SpritersResourceDownloader:
         if not self.validateLink():
             raise Exception("Invalid link. Please provid a link to a game on the website spriters-resource.com")
 
-        self.m_saveDirectory = f"{ImageSaver.DefaultDownloadDataFolderPath}/{self.m_consoleName}/{self.m_gameName}"
+        self.m_saveDirectory = f"{ResourceSaver.DefaultDownloadDataFolderPath}/{self.m_consoleName}/{self.m_gameName}"
 
     def validateLink(self) -> bool:
         pattern = re.compile(SpritersResourceDownloader.UrlRegexValidator)
@@ -66,18 +68,35 @@ class SpritersResourceDownloader:
 
     def downloadSpritesheets(self, links):
         self.m_logger.startProgessBar(len(links))
+
         for linkData in links:
+
             self.m_logger.incrementProgessBar()
             page = requests.get(f"{SpritersResourceDownloader.UrlSpritersResource}{linkData['link']}").content
             soup = BeautifulSoup(page, "html.parser")
             spritesheetDiv = soup.find("div", {"id": f"{SpritersResourceDownloader.SpritesheetImageIdClass}"})
-            spriteLink = spritesheetDiv.img.get("src")
 
-            self.downloadAndSaveSprite(spriteLink, linkData["name"])
+            if spritesheetDiv is not None:
+                spriteLink = spritesheetDiv.img.get("src")
+                self.downloadAndSaveSprite(spriteLink, linkData["name"])
+
+            else:
+                zipDiv = soup.find("div", [SpritersResourceDownloader.ZipDownloadClass])
+                
+                if zipDiv is not None:
+                    self.downloadZIP(zipDiv.parent.attrs['href'], linkData['name'])
+
         self.m_logger.printDownloadDone()
+
+    def downloadZIP(self, url: str, name: str):
+        url = f'{SpritersResourceDownloader.UrlSpritersResource}{url}'
+        response = requests.get(url, stream = True)
+
+        if response.ok:
+            ResourceSaver.saveZip(ZipFile(BytesIO(response.content)), self.m_saveDirectory, name)
 
     def downloadAndSaveSprite(self, link=str, name=str):
         imageContent = requests.get(f"{SpritersResourceDownloader.UrlSpritersResource}{link}").content
         image = Image.open(BytesIO(imageContent)).convert('RGBA')
-        ImageSaver.saveImage(image, self.m_saveDirectory, name)
+        ResourceSaver.saveImage(image, self.m_saveDirectory, name)
 
