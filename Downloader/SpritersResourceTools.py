@@ -18,12 +18,16 @@ class SpritersResourceDownloader:
     SpritesheetImageIdClass = "assetdisplay"
     ZipDownloadId = "download"
 
-    def __init__(self, link=str) -> None:
+    def __init__(self, link: str, nsfw: bool) -> None:
         self.m_link = link
+        self.m_cookies = {"shownsfw": "0"}
         self.m_logger = Logger()
 
         if not self.validateLink():
             raise Exception("Invalid link. Please provid a link to a game on the website spriters-resource.com")
+
+        if nsfw:
+            self.m_cookies["shownsfw"] = "1"
 
         self.m_saveDirectory = f"{ResourceSaver.DefaultDownloadDataFolderPath}/{self.m_consoleName}/{self.m_gameName}"
 
@@ -37,7 +41,7 @@ class SpritersResourceDownloader:
             return True
         return False
 
-    def setVerboseEnabled(self, enable=bool):
+    def setVerboseEnabled(self, enable: bool):
         self.m_logger.setEnabled(enable)
 
     def startDownload(self):
@@ -47,7 +51,7 @@ class SpritersResourceDownloader:
     def computeSpritesheetLinks(self):
         self.m_logger.printSummary(self.m_consoleName, self.m_gameName)
         self.m_logger.printDownload(self.m_link)
-        page = requests.get(self.m_link).content
+        page = requests.get(self.m_link, cookies=self.m_cookies).content
 
         soup = BeautifulSoup(page, "html.parser")
         spritesheetDivList = soup.find_all("div", {"class" : f"{SpritersResourceDownloader.SpritesheetDivClass}"})
@@ -72,7 +76,7 @@ class SpritersResourceDownloader:
         for linkData in links:
 
             self.m_logger.incrementProgessBar()
-            page = requests.get(f"{SpritersResourceDownloader.UrlSpritersResource}{linkData['link']}").content
+            page = requests.get(f"{SpritersResourceDownloader.UrlSpritersResource}{linkData['link']}", cookies=self.m_cookies).content
             soup = BeautifulSoup(page, "html.parser")
             spritesheetDiv = soup.find("div", {"id": f"{SpritersResourceDownloader.SpritesheetImageIdClass}"})
             spritesheet = spritesheetDiv.find("img", recursive=False) if spritesheetDiv is not None else None
@@ -96,7 +100,7 @@ class SpritersResourceDownloader:
         if response.ok:
             ResourceSaver.saveZip(ZipFile(BytesIO(response.content)), self.m_saveDirectory, name)
 
-    def downloadAndSaveSprite(self, link=str, name=str):
+    def downloadAndSaveSprite(self, link: str, name: str):
         imageContent = requests.get(f"{SpritersResourceDownloader.UrlSpritersResource}{link}").content
         image = Image.open(BytesIO(imageContent)).convert('RGBA')
         ResourceSaver.saveImage(image, self.m_saveDirectory, name)
