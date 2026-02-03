@@ -74,8 +74,9 @@ positional arguments:
   url            URL to a game on the website spriters-resource.com
 
 optional arguments:
-  -h, --help     show this help message and exit
-  -v, --verbose  use it to print progress during download
+  -h, --help     Show this help message and exit
+  -v, --verbose  Use it to print progress during download
+  --nsfw         Use it to allow download of nsfw content
 ```
 
 It is recommended to activate the verbose mode (optional, not activated by default) to keep track of the progress.
