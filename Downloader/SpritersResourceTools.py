@@ -13,10 +13,10 @@ class SpritersResourceDownloader:
     UrlSpritersResource = "https://www.spriters-resource.com"
     UrlRegexValidator = "^https?:\/\/www\.spriters-resource\.com\/([a-zA-Z0-9_]+)\/([a-zA-Z0-9_]+)"
 
-    SpritesheetDivClass = "updatesheeticons"
-    IconHeaderTextSpanClass = "iconheadertext"
-    SpritesheetImageIdClass = "sheet-container"
-    ZipDownloadClass = "zip-download"
+    SpritesheetDivClass = "icondisplay"
+    IconHeaderTextDivClass = "iconheader"
+    SpritesheetImageIdClass = "assetdisplay"
+    ZipDownloadId = "download"
 
     def __init__(self, link=str) -> None:
         self.m_link = link
@@ -58,7 +58,7 @@ class SpritersResourceDownloader:
             spriteSheetLinks = spritesheetDiv.find_all("a")
             for spriteSheetLink in spriteSheetLinks:
                 link = spriteSheetLink.get("href")
-                name = spriteSheetLink.find("span", {"class" : f"{SpritersResourceDownloader.IconHeaderTextSpanClass}"}).text
+                name = spriteSheetLink.find("div", {"class" : f"{SpritersResourceDownloader.IconHeaderTextDivClass}"}).text
                 name = StringHelper.cleanString(name)
                 links.append({
                     "link": link,
@@ -75,16 +75,17 @@ class SpritersResourceDownloader:
             page = requests.get(f"{SpritersResourceDownloader.UrlSpritersResource}{linkData['link']}").content
             soup = BeautifulSoup(page, "html.parser")
             spritesheetDiv = soup.find("div", {"id": f"{SpritersResourceDownloader.SpritesheetImageIdClass}"})
+            spritesheet = spritesheetDiv.find("img", recursive=False) if spritesheetDiv is not None else None
 
-            if spritesheetDiv is not None:
-                spriteLink = spritesheetDiv.img.get("src")
+            if spritesheet is not None:
+                spriteLink = spritesheet.get("src")
                 self.downloadAndSaveSprite(spriteLink, linkData["name"])
 
             else:
-                zipDiv = soup.find("div", [SpritersResourceDownloader.ZipDownloadClass])
+                zipLink = soup.find("a", {"id": f"{SpritersResourceDownloader.ZipDownloadId}"})
                 
-                if zipDiv is not None:
-                    self.downloadZIP(zipDiv.parent.attrs['href'], linkData['name'])
+                if zipLink is not None:
+                    self.downloadZIP(zipLink.attrs['href'], linkData['name'])
 
         self.m_logger.printDownloadDone()
 
