@@ -48,6 +48,12 @@ class SpritersResourceDownloader:
         links = self.computeSpritesheetLinks()
         self.downloadSpritesheets(links)
 
+    def extractAssetId(self, link: str) -> str:
+        match = re.search(r"\/asset\/([0-9]+)\/?$", link)
+        if match is not None:
+            return match.group(1)
+        return "unknown"
+
     def computeSpritesheetLinks(self):
         self.m_logger.printSummary(self.m_consoleName, self.m_gameName)
         self.m_logger.printDownload(self.m_link)
@@ -57,6 +63,7 @@ class SpritersResourceDownloader:
         spritesheetDivList = soup.find_all("div", {"class" : f"{SpritersResourceDownloader.SpritesheetDivClass}"})
         
         links = []
+        nameCounts = {}
 
         for spritesheetDiv in spritesheetDivList:
             spriteSheetLinks = spritesheetDiv.find_all("a")
@@ -64,10 +71,24 @@ class SpritersResourceDownloader:
                 link = spriteSheetLink.get("href")
                 name = spriteSheetLink.find("div", {"class" : f"{SpritersResourceDownloader.IconHeaderTextDivClass}"}).text
                 name = StringHelper.cleanString(name)
+                assetId = self.extractAssetId(link)
                 links.append({
                     "link": link,
-                    "name": name
+                    "name": name,
+                    "assetId": assetId
                 })
+
+                if name not in nameCounts:
+                    nameCounts[name] = 0
+
+                nameCounts[name] += 1
+
+        for linkData in links:
+            if nameCounts[linkData["name"]] > 1:
+                linkData["saveName"] = f'{linkData["name"]}__asset_{linkData["assetId"]}'
+            else:
+                linkData["saveName"] = linkData["name"]
+
         return links
 
     def downloadSpritesheets(self, links):
@@ -83,13 +104,13 @@ class SpritersResourceDownloader:
 
             if spritesheet is not None:
                 spriteLink = spritesheet.get("src")
-                self.downloadAndSaveSprite(spriteLink, linkData["name"])
+                self.downloadAndSaveSprite(spriteLink, linkData["saveName"])
 
             else:
                 zipLink = soup.find("a", {"id": f"{SpritersResourceDownloader.ZipDownloadId}"})
                 
                 if zipLink is not None:
-                    self.downloadZIP(zipLink.attrs['href'], linkData['name'])
+                    self.downloadZIP(zipLink.attrs['href'], linkData['saveName'])
 
         self.m_logger.printDownloadDone()
 
